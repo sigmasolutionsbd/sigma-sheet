@@ -10,16 +10,16 @@ use Sigmasolutions\Sheets\Exceptions\SigmaSheetException;
 
 class SheetReader
 {
+    private const ACTION_TYPE_FILTER = 'filter';
+    private const ACTION_TYPE_MAPPER = 'mapper';
     private $filePath;
-
     private $skipInitialNumberOfRows = 0;
     private $chunkSize = 500;
-    private $filter = null;
-    private $mapper = null;
     private $shouldRemoveEmpty = true;
     private $sheetNames = null;
     private $sheetIndexs = [0];
     private $readAsChunkCallbackSupported = true;
+    private $actions = [];
 
     public function __construct(string $filePath)
     {
@@ -31,22 +31,28 @@ class SheetReader
         return $this->chunkSize;
     }
 
+    public function getSkipInitialRows()
+    {
+        return $this->skipInitialNumberOfRows;
+    }
+
+    public function skipHeader(): SheetReader
+    {
+        $this->skipInitialRows(1);
+        return $this;
+    }
+
     /**
      * @param int $skipInitialNumberOfRows Skip Initial Number of Rows
      * @return SheetReader
      */
-    public function skip(int $skipInitialNumberOfRows): SheetReader
+    public function skipInitialRows(int $skipInitialNumberOfRows): SheetReader
     {
         if ($skipInitialNumberOfRows < 0) {
             $this->skipInitialNumberOfRows = 0;
         }
         $this->skipInitialNumberOfRows = $skipInitialNumberOfRows;
         return $this;
-    }
-
-    public function getSkip()
-    {
-        return $this->skipInitialNumberOfRows;
     }
 
     /**
@@ -61,7 +67,7 @@ class SheetReader
             $selectedCols = ['*'];
         }
 
-        return $this->setMapper(function ($cells) use ($selectedCols) {
+        return $this->addMapper(function ($cells) use ($selectedCols) {
             if ($selectedCols[0] === '*') {
                 return $cells;
             }
@@ -71,7 +77,7 @@ class SheetReader
                 }
                 return trim($cells[$selectedCol]);
             }, $selectedCols);
-        })->readAsChunks(null);
+        })->readAsChunks();
     }
 
     /**
@@ -79,7 +85,7 @@ class SheetReader
      * @return array
      * @throws SigmaSheetException
      */
-    public function readAsChunks(?callable $dataConsumer)
+    public function readAsChunks(?callable $dataConsumer = null)
     {
         $skip = $this->skipInitialNumberOfRows;
         try {
@@ -99,11 +105,12 @@ class SheetReader
                         $skip--;
                         continue;
                     }
-                    $data = $this->getMappedCells($row->toArray());
 
-                    if (!$this->shouldKeepData($data)) {
+                    $data = $this->applyActions($row);
+                    if ($data === false) {
                         continue;
                     }
+
                     $dataChunks[] = $data;
                     if (!$this->readAsChunkCallbackSupported) {
                         continue;
@@ -136,25 +143,28 @@ class SheetReader
         return in_array($sheet->getIndex(), $this->sheetIndexs);
     }
 
-    private function getMappedCells($cells)
+    private function applyActions($row)
     {
-        if (is_null($this->mapper)) {
-            return $cells;
+        $cells = $row->toArray();
+        foreach ($this->actions as $action) {
+            switch ($action['type']) {
+                case static::ACTION_TYPE_MAPPER:
+                    $cells = $action['action']($cells);
+                    break;
+                case static::ACTION_TYPE_FILTER:
+                    $isFiltered = boolval($action['action']($cells));
+                    if (!$isFiltered) {
+                        return false;
+                    }
+                    break;
+            }
         }
-        return call_user_func($this->mapper, $cells);
+        return $cells;
     }
 
-    private function shouldKeepData($data)
+    public function addMapper(callable $mapper): SheetReader
     {
-        if (!is_null($this->filter)) {
-            return boolval(call_user_func($this->filter, $data));
-        }
-        return true;
-    }
-
-    public function setMapper(?callable $mapper = null): SheetReader
-    {
-        $this->mapper = $mapper;
+        $this->actions[] = ['type' => static::ACTION_TYPE_MAPPER, 'action' => $mapper];
         return $this;
     }
 
@@ -212,13 +222,9 @@ class SheetReader
         return $this;
     }
 
-    /**
-     * @param callable|null $filter Add filter method
-     * @return $this
-     */
-    public function setFilter(?callable $filter = null): SheetReader
+    public function addFilter(callable $filter): SheetReader
     {
-        $this->filter = $filter;
+        $this->actions[] = ['type' => static::ACTION_TYPE_FILTER, 'action' => $filter];
         return $this;
     }
 }

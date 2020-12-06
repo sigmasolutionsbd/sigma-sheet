@@ -4,5 +4,10 @@
 
 
 
-#####Uses: Please see 
-    tests/RowReaderTest.php
+###Uses: Please see 
+    tests/SheetReaderTest.php
+    
+    
+## Running tests
+
+    $ vendor/bin/phpunit

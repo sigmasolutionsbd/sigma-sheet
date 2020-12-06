@@ -7,7 +7,7 @@ use PHPUnit\Framework\TestCase;
 use Sigmasolutions\Sheets\Reader\SheetReader;
 
 
-class RowReaderTest extends TestCase
+class SheetReaderTest extends TestCase
 {
     private $resourcesPath = 'tests/resources';
 
@@ -62,10 +62,13 @@ class RowReaderTest extends TestCase
     public function that_skip_works_for_read_as_chunks()
     {
         $rowReader = new SheetReader($this->getResourcePath('multi_sheet.xlsx'));
-        $rowReader->skip(1)->readAsChunks(function ($data) {
+        $rowReader->skipInitialRows(1)->readAsChunks(function ($data) {
             $this->assertEquals(array_slice($this->sheetValues[0], 1), $data);
         });
-        $rowReader->skip(2)->readAsChunks(function ($data) {
+        $rowReader->skipHeader()->readAsChunks(function ($data) {
+            $this->assertEquals(array_slice($this->sheetValues[0], 1), $data);
+        });
+        $rowReader->skipInitialRows(2)->readAsChunks(function ($data) {
             $this->assertEquals(array_slice($this->sheetValues[0], 2), $data);
         });
     }
@@ -107,10 +110,10 @@ class RowReaderTest extends TestCase
     /**
      * @test
      */
-    public function that_set_mapper_works_for_read_as_chunks()
+    public function that_add_mapper_works_for_read_as_chunks()
     {
         $rowReader = new SheetReader($this->getResourcePath('multi_sheet.xlsx'));
-        $rowReader->setMapper(function ($cells) {
+        $rowReader->addMapper(function ($cells) {
             return join(',', $cells);
         })->readAsChunks(function ($data) {
             $this->assertEquals(["s1header1,s1header2,s1header3", "s1va2,s1vb2,s1vc2", "s1va3,s1vb3,s1vc3", "s1va4,s1vb4,s1vc4"], $data);
@@ -123,12 +126,33 @@ class RowReaderTest extends TestCase
     public function that_set_filter_works_for_read_as_chunks()
     {
         $rowReader = new SheetReader($this->getResourcePath('multi_sheet.xlsx'));
-        $rowReader->setFilter(function ($cells) {
+        $rowReader->addFilter(function ($cells) {
             return strpos(join(',', $cells), 'header') === false;
         })->readAsChunks(function ($data) {
             $this->assertEquals([["s1va2", "s1vb2", "s1vc2"], ["s1va3", "s1vb3", "s1vc3"], ["s1va4", "s1vb4", "s1vc4"]], $data);
         });
     }
+
+    /**
+     * @test
+     */
+    public function that_multiple_add_mapper_add_filter_works_for_read_as_chunks()
+    {
+        $rowReader = new SheetReader($this->getResourcePath('multi_sheet.xlsx'));
+        $rowReader->addFilter(function ($cells) {
+            return strpos(join(',', $cells), 'header') === false;
+        })->addMapper(function ($cells){
+            return join(',', $cells);
+        })->addFilter(function ($data){
+            return strpos($data, '4,s1vb4') === false;
+        })->addMapper(function ($data){
+            return explode(',', $data);
+        })
+            ->readAsChunks(function ($data) {
+            $this->assertEquals([["s1va2", "s1vb2", "s1vc2"], ["s1va3", "s1vb3", "s1vc3"]], $data);
+        });
+    }
+
 
     /**
      * @test
