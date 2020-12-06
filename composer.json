@@ -1,0 +1,30 @@
+{
+    "name": "sigmasolutions/sheets",
+    "description": "Wrapper around box/spout with utility accessor functions",
+    "type": "library",
+    "authors": [
+        {
+            "name": "Md. Ashiquzzaman",
+            "email": "ashiq.zaman@sigmasolutions.com.bd"
+        }
+    ],
+    "require": {
+        "php": "^7.2.5",
+        "box/spout": "^3.1"
+    },
+
+    "autoload": {
+        "psr-4": {
+            "Sigmasolutions\\Sheets\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Sigmasolutions\\Sheets\\Tests\\": "tests/"
+        }
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9"
+    },
+    "minimum-stability": "stable"
+}
