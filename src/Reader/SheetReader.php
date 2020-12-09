@@ -18,12 +18,19 @@ class SheetReader
     private $shouldRemoveEmpty = true;
     private $sheetNames = null;
     private $sheetIndexs = [0];
-    private $readAsChunkCallbackSupported = true;
+    private $shouldUseHiddenSheet = false;
     private $actions = [];
+
+    private $isIndexBaseSheetIteration = true;
 
     public function __construct(string $filePath)
     {
         $this->filePath = $filePath;
+    }
+
+    public static function openFile($filePath)
+    {
+        return new static($filePath);
     }
 
     public function getChunkSize()
@@ -62,12 +69,14 @@ class SheetReader
      */
     public function getRows(?array $selectedCols = null): array
     {
-        $this->readAsChunkCallbackSupported = false;
         if (is_null($selectedCols) || count($selectedCols) == 0) {
             $selectedCols = ['*'];
         }
 
-        return $this->addMapper(function ($cells) use ($selectedCols) {
+        $noOfSelectedSheet = $this->isIndexBaseSheetIteration? count($this->sheetIndexs): count($this->sheetNames);
+
+        $dataOfSheets = [];
+        $this->addMapper(function ($cells) use ($selectedCols) {
             if ($selectedCols[0] === '*') {
                 return $cells;
             }
@@ -77,7 +86,17 @@ class SheetReader
                 }
                 return trim($cells[$selectedCol]);
             }, $selectedCols);
-        })->readAsChunks();
+        })->readAsChunks(function ($chunk, $index, $sheetName) use (&$dataOfSheets) {
+            $ref = $this->isIndexBaseSheetIteration ? $index : $sheetName;
+            if (!array_key_exists($index, $dataOfSheets)) {
+                $dataOfSheets[$ref] = [];
+            }
+            $dataOfSheets[$ref] = array_merge($dataOfSheets[$ref], $chunk);
+        });
+        if($noOfSelectedSheet === 1){
+            return $dataOfSheets[array_keys($dataOfSheets)[0]];
+        }
+        return $dataOfSheets;
     }
 
     /**
@@ -85,18 +104,18 @@ class SheetReader
      * @return array
      * @throws SigmaSheetException
      */
-    public function readAsChunks(?callable $dataConsumer = null)
+    public function readAsChunks(callable $dataConsumer)
     {
-        $skip = $this->skipInitialNumberOfRows;
         try {
             $reader = ReaderFactory::createFromFile($this->filePath);
             $reader->open($this->filePath);
-            $dataChunks = [];
-            foreach ($reader->getSheetIterator() as $sheet) {
-                if (!$this->shouldUseSheet($sheet)) {
-                    continue;
-                }
-                foreach ($sheet->getRowIterator() as $row) {
+            $originalSheets = iterator_to_array($reader->getSheetIterator());
+            $filteredSheets = $this->getSelectedSheets($originalSheets);
+
+            foreach ($filteredSheets as $sheetWithInxAndName) {
+                $skip = $this->skipInitialNumberOfRows;
+                $dataChunks = [];
+                foreach ($sheetWithInxAndName['sheet']->getRowIterator() as $row) {
                     if ($this->shouldRemoveEmpty && empty($row)) {
                         continue;
                     }
@@ -110,37 +129,65 @@ class SheetReader
                     if ($data === false) {
                         continue;
                     }
-
                     $dataChunks[] = $data;
-                    if (!$this->readAsChunkCallbackSupported) {
-                        continue;
-                    }
-                    if ($this->chunkSize !== 'all' && count($dataChunks) % $this->chunkSize == 0) {
-                        $dataConsumer($dataChunks);
+                    if (count($dataChunks) % $this->chunkSize == 0) {
+                        $dataConsumer($dataChunks, $sheetWithInxAndName['index'], $sheetWithInxAndName['name']);
                         $dataChunks = [];
                     }
                 }
-            }
-            if (!$this->readAsChunkCallbackSupported) {
-                return $dataChunks;
-            }
-            if (count($dataChunks) != 0) {
-                $dataConsumer($dataChunks);
+
+                if (count($dataChunks) != 0) {
+                    $dataConsumer($dataChunks, $sheetWithInxAndName['index'], $sheetWithInxAndName['name']);
+                }
             }
 
         } catch (SpoutException $spoutException) {
             throw new SigmaSheetException(($spoutException->getMessage()));
         } finally {
-            $reader->close();
+            if (isset($reader)) {
+                $reader->close();
+            }
         }
     }
 
-    private function shouldUseSheet($sheet)
+    /**
+     * @param $originalSheets
+     * @return array
+     * @throws SigmaSheetException
+     */
+    public function getSelectedSheets($originalSheets)
     {
-        if (!empty($this->sheetNames)) {
-            return in_array($sheet->getName(), $this->sheetNames);
+        if (!$this->shouldUseHiddenSheet) {
+            $originalSheets = array_values(array_filter($originalSheets, function ($sheet) {
+                return $sheet->isVisible();
+            }));
         }
-        return in_array($sheet->getIndex(), $this->sheetIndexs);
+        $originalSheetsWithIndexAndName = array_map(function ($idx, $sheet) {
+            return ['name' => $sheet->getName(), 'index' => $idx, 'sheet' => $sheet];
+        }, array_keys($originalSheets), $originalSheets);
+
+        return $this->filterSelectedSheets($originalSheetsWithIndexAndName, $this->isIndexBaseSheetIteration ? $this->sheetIndexs : $this->sheetNames);
+    }
+
+    /**
+     * @param $originalSheets
+     * @param $sheetRefs
+     * @return array
+     * @throws SigmaSheetException
+     */
+    private function filterSelectedSheets($originalSheets, $sheetRefs)
+    {
+        $filteredSheets = [];
+        foreach ($sheetRefs as $ref) {
+            $founds = array_filter($originalSheets, function ($sheetWithIdxAndName) use ($ref) {
+                return ($this->isIndexBaseSheetIteration && $ref == $sheetWithIdxAndName['index']) || (!$this->isIndexBaseSheetIteration && $ref == $sheetWithIdxAndName['name']);
+            });
+            if (empty($founds) || count($founds) !== 1) {
+                throw new SigmaSheetException('undefined sheet ' . $ref);
+            }
+            $filteredSheets[] = array_pop($founds);
+        }
+        return $filteredSheets;
     }
 
     private function applyActions($row)
@@ -205,6 +252,7 @@ class SheetReader
 
     public function setSheetNames($sheetNames): SheetReader
     {
+        $this->isIndexBaseSheetIteration = false;
         $this->sheetNames = array_map(function ($value) {
             return trim($value);
         }, is_array($sheetNames) ? $sheetNames : [$sheetNames]);
@@ -218,7 +266,14 @@ class SheetReader
 
     public function setSheetIndexs($sheetIndexs): SheetReader
     {
+        $this->isIndexBaseSheetIteration = true;
         $this->sheetIndexs = is_array($sheetIndexs) ? $sheetIndexs : [$sheetIndexs];
+        return $this;
+    }
+
+    public function useHiddenSheet(): SheetReader
+    {
+        $this->shouldUseHiddenSheet = true;
         return $this;
     }
 
