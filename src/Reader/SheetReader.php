@@ -112,7 +112,7 @@ class SheetReader
         });
         if ($noOfSelectedSheet === 1) {
             if (empty($dataOfSheets)) {
-                return [];
+                return [[]];
             }
             return $dataOfSheets[array_keys($dataOfSheets)[0]];
         }
