@@ -5,6 +5,7 @@ namespace Sigmasolutions\Sheets\Reader;
 
 
 use Box\Spout\Common\Exception\SpoutException;
+use Box\Spout\Common\Type;
 use Box\Spout\Reader\Common\Creator\ReaderFactory;
 use Sigmasolutions\Sheets\Exceptions\SigmaSheetException;
 
@@ -21,16 +22,32 @@ class SheetReader
     private $shouldUseHiddenSheet = false;
     private $actions = [];
 
+    private $readerType;
+
     private $isIndexBaseSheetIteration = true;
 
-    public function __construct(string $filePath)
+    public function __construct(string $filePath, $readerType = null)
     {
         $this->filePath = $filePath;
+        $this->readerType = $readerType;
+        if (is_null($readerType)) {
+            $this->readerType = \strtolower(\pathinfo($filePath, PATHINFO_EXTENSION));
+        }
     }
 
     public static function openFile($filePath)
     {
         return new static($filePath);
+    }
+
+    public static function openFileAsXLSX($filePath)
+    {
+        return new static($filePath, Type::XLSX);
+    }
+
+    public static function openFileAsCSV($filePath)
+    {
+        return new static($filePath, Type::CSV);
     }
 
     public function getChunkSize()
@@ -73,7 +90,7 @@ class SheetReader
             $selectedCols = ['*'];
         }
 
-        $noOfSelectedSheet = $this->isIndexBaseSheetIteration? count($this->sheetIndexs): count($this->sheetNames);
+        $noOfSelectedSheet = $this->isIndexBaseSheetIteration ? count($this->sheetIndexs) : count($this->sheetNames);
 
         $dataOfSheets = [];
         $this->addMapper(function ($cells) use ($selectedCols) {
@@ -93,7 +110,7 @@ class SheetReader
             }
             $dataOfSheets[$ref] = array_merge($dataOfSheets[$ref], $chunk);
         });
-        if($noOfSelectedSheet === 1){
+        if ($noOfSelectedSheet === 1) {
             return $dataOfSheets[array_keys($dataOfSheets)[0]];
         }
         return $dataOfSheets;
@@ -107,7 +124,7 @@ class SheetReader
     public function readAsChunks(callable $dataConsumer)
     {
         try {
-            $reader = ReaderFactory::createFromFile($this->filePath);
+            $reader = ReaderFactory::createFromType($this->readerType);
             $reader->open($this->filePath);
             $originalSheets = iterator_to_array($reader->getSheetIterator());
             $filteredSheets = $this->getSelectedSheets($originalSheets);

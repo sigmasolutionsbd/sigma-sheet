@@ -20,6 +20,8 @@ class SheetReaderTest extends TestCase
 
     private $multiSheetPath;
     private $multiSheetWithHiddenSheetPath;
+    private $multiSheetXLSXWithoutExtensionPath;
+    private $multiSheetCSVWithoutExtensionPath;
 
     /**
      * @test
@@ -294,15 +296,39 @@ class SheetReaderTest extends TestCase
         $this->assertEquals($this->sheetValues[2], $data['Sheet-3']);
     }
 
+    /**
+     * @test
+     */
+    public function it_allows_open_file_as_xlsx()
+    {
+        $data = SheetReader::openFileAsXLSX($this->multiSheetXLSXWithoutExtensionPath)->setSheetNames(['Sheet-1', 'Sheet-2', 'Sheet-3'])->getRows();
+
+        $this->assertEquals($this->sheetValues[0], $data['Sheet-1']);
+        $this->assertEquals($this->sheetValues[1], $data['Sheet-2']);
+        $this->assertEquals($this->sheetValues[2], $data['Sheet-3']);
+    }
+
+    /**
+     * @test
+     */
+    public function it_allows_open_file_as_csv()
+    {
+        $data = SheetReader::openFileAsCSV($this->multiSheetCSVWithoutExtensionPath)->getRows();
+        $this->assertEquals($this->sheetValues[0], $data);
+    }
+
     protected function setUp(): void
     {
         $this->multiSheetPath = $this->getResourcePath('multi_sheet.xlsx');
+        $this->multiSheetXLSXWithoutExtensionPath = $this->getResourcePath('multi_sheet_xlsx_without_extension', 'xlsx');
+        $this->multiSheetCSVWithoutExtensionPath = $this->getResourcePath('multi_sheet_csv_without_extension', 'csv');
         $this->multiSheetWithHiddenSheetPath = $this->getResourcePath('multi_sheet_invalid_index.xlsx');
     }
 
-    protected function getResourcePath($resourceName)
+    protected function getResourcePath($resourceName, $reType = null)
     {
         $resourceType = pathinfo($resourceName, PATHINFO_EXTENSION);
+        $resourceType = !empty($resourceType) ? $resourceType : $reType;
         $resourcePath = realpath($this->resourcesPath) . '/' . strtolower($resourceType) . '/' . $resourceName;
         return (file_exists($resourcePath) ? $resourcePath : null);
     }
