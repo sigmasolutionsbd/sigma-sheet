@@ -111,6 +111,9 @@ class SheetReader
             $dataOfSheets[$ref] = array_merge($dataOfSheets[$ref], $chunk);
         });
         if ($noOfSelectedSheet === 1) {
+            if (empty($dataOfSheets)) {
+                return [];
+            }
             return $dataOfSheets[array_keys($dataOfSheets)[0]];
         }
         return $dataOfSheets;
