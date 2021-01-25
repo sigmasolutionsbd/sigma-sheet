@@ -10,7 +10,8 @@
     ],
     "require": {
         "php": "^7.2.5",
-        "box/spout": "^3.1"
+        "box/spout": "^3.1",
+        "phpoffice/phpspreadsheet": "^1.16"
     },
 
     "autoload": {
