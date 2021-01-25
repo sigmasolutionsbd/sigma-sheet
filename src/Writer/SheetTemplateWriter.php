@@ -4,12 +4,15 @@
 namespace Sigmasolutions\Sheets\Writer;
 
 
+use PhpOffice\PhpSpreadsheet\Exception;
+use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class SheetTemplateWriter
 {
     /**
-     * @var \PhpOffice\PhpSpreadsheet\Spreadsheet
+     * @var Spreadsheet
      */
     private $spreadsheet;
 
@@ -19,18 +22,14 @@ class SheetTemplateWriter
      */
     public function __construct(string $templatePath)
     {
-        $this->spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($templatePath);
+        $this->spreadsheet = IOFactory::load($templatePath);
     }
 
-    public static function stringyfyValues($rows)
+    public static function stringifyValues($rows)
     {
         for ($i = 0; $i < count($rows); $i++) {
             for ($j = 0; $j < count($rows[$i]); $j++) {
-                if (is_null($rows[$i][$j])) {
-                    $rows[$i][$j] = '';
-                } else {
-                    $rows[$i][$j] = "" . $rows[$i][$j] . "";
-                }
+                $rows[$i][$j] = is_null($rows[$i][$j]) ? null : "" . $rows[$i][$j] . "";
             }
         }
         return $rows;
@@ -53,12 +52,13 @@ class SheetTemplateWriter
      */
     public function writeToSheetByName($sheetName, array $rows, $startCell = 'A1'): SheetTemplateWriter
     {
-        $rows = static::stringyfyValues($rows);
+        $rows = static::stringifyValues($rows);
         $this->spreadsheet->getSheetByName($sheetName)
             ->fromArray(
                 $rows,
                 NULL,
-                $startCell
+                $startCell,
+                true
             );
         return $this;
     }
@@ -68,16 +68,17 @@ class SheetTemplateWriter
      * @param array $rows
      * @param string $startCell
      * @return $this
-     * @throws \PhpOffice\PhpSpreadsheet\Exception
+     * @throws Exception
      */
     public function writeToSheet($sheetIndex, array $rows, $startCell = 'A1'): SheetTemplateWriter
     {
-        $rows = static::stringyfyValues($rows);
+        $rows = static::stringifyValues($rows);
         $this->spreadsheet->getSheet($sheetIndex)
             ->fromArray(
                 $rows,
                 null,
-                $startCell
+                $startCell,
+                true
             );
         return $this;
     }
