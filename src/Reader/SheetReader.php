@@ -5,9 +5,9 @@ namespace Sigmasolutions\Sheets\Reader;
 
 
 use Box\Spout\Common\Exception\SpoutException;
-use Box\Spout\Common\Type;
-use Box\Spout\Reader\Common\Creator\ReaderFactory;
 use Sigmasolutions\Sheets\Exceptions\SigmaSheetException;
+use Sigmasolutions\Sheets\Reader\Creator\ReaderFactory;
+use Sigmasolutions\Sheets\Reader\Creator\ReaderType;
 
 class SheetReader
 {
@@ -21,6 +21,7 @@ class SheetReader
     private $sheetIndexs = [0];
     private $shouldUseHiddenSheet = false;
     private $actions = [];
+    private $fieldSeparator;
 
     private $readerType;
 
@@ -35,19 +36,51 @@ class SheetReader
         }
     }
 
-    public static function openFile($filePath)
+    /**
+     * @param $filePath
+     * @return static
+     */
+    public static function openFile($filePath): SheetReader
     {
         return new static($filePath);
     }
 
-    public static function openFileAsXLSX($filePath)
+    /**
+     * @param $filePath
+     * @return static
+     */
+    public static function openFileAsXLSX($filePath): SheetReader
     {
-        return new static($filePath, Type::XLSX);
+        return new static($filePath, ReaderType::XLSX);
     }
 
-    public static function openFileAsCSV($filePath)
+    /**
+     * @param $filePath
+     * @return static
+     */
+    public static function openFileAsCSV($filePath): SheetReader
     {
-        return new static($filePath, Type::CSV);
+        return new static($filePath, ReaderType::CSV);
+    }
+
+    /**
+     * @param $filePath
+     * @param callable | string $fieldSeparator callback($row) or Character that delimits fields
+     * @return SheetReader
+     */
+    public static function openFileAsTxt($filePath, $fieldSeparator): SheetReader
+    {
+        $obj = new static($filePath, ReaderType::TXT);
+        $obj->setFieldSeparator($fieldSeparator);
+        return $obj;
+    }
+
+    /**
+     * @param callable | string $fieldSeparator callback($row) or Character that delimits fields
+     */
+    public function setFieldSeparator($fieldSeparator)
+    {
+        $this->fieldSeparator = $fieldSeparator;
     }
 
     public function getChunkSize()
@@ -128,6 +161,9 @@ class SheetReader
     {
         try {
             $reader = ReaderFactory::createFromType($this->readerType);
+            if (!empty($this->fieldSeparator)) {
+                $reader->setTxtFieldSeparator($this->fieldSeparator);
+            }
             $reader->open($this->filePath);
             $originalSheets = iterator_to_array($reader->getSheetIterator());
             $filteredSheets = $this->getSelectedSheets($originalSheets);

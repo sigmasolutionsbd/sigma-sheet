@@ -10,8 +10,6 @@ use Sigmasolutions\Sheets\Reader\SheetReader;
 
 class SheetReaderTest extends TestCase
 {
-    private $resourcesPath = 'tests/resources';
-
     private $sheetValues = [
         [["s1header1", "s1header2", "s1header3"], ["s1va2", "s1vb2", "s1vc2"], ["s1va3", "s1vb3", "s1vc3"], ["s1va4", "s1vb4", "s1vc4"]],
         [["s2header1", "s2header2", "s2header3"], ["s2va2", "s2vb2", "s2vc2"], ["s2va3", "s2vb3", "s2vc3"], ["s2va4", "s2vb4", "s2vc4"]],
@@ -319,17 +317,9 @@ class SheetReaderTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->multiSheetPath = $this->getResourcePath('multi_sheet.xlsx');
-        $this->multiSheetXLSXWithoutExtensionPath = $this->getResourcePath('multi_sheet_xlsx_without_extension', 'xlsx');
-        $this->multiSheetCSVWithoutExtensionPath = $this->getResourcePath('multi_sheet_csv_without_extension', 'csv');
-        $this->multiSheetWithHiddenSheetPath = $this->getResourcePath('multi_sheet_invalid_index.xlsx');
-    }
-
-    protected function getResourcePath($resourceName, $reType = null)
-    {
-        $resourceType = pathinfo($resourceName, PATHINFO_EXTENSION);
-        $resourceType = !empty($resourceType) ? $resourceType : $reType;
-        $resourcePath = realpath($this->resourcesPath) . '/' . strtolower($resourceType) . '/' . $resourceName;
-        return (file_exists($resourcePath) ? $resourcePath : null);
+        $this->multiSheetPath = Utility::getResourcePath('multi_sheet.xlsx');
+        $this->multiSheetXLSXWithoutExtensionPath = Utility::getResourcePath('multi_sheet_xlsx_without_extension', 'xlsx');
+        $this->multiSheetCSVWithoutExtensionPath = Utility::getResourcePath('multi_sheet_csv_without_extension', 'csv');
+        $this->multiSheetWithHiddenSheetPath = Utility::getResourcePath('multi_sheet_invalid_index.xlsx');
     }
 }

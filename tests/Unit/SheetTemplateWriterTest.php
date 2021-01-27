@@ -10,7 +10,6 @@ use Sigmasolutions\Sheets\Writer\SheetTemplateWriter;
 
 class SheetTemplateWriterTest extends TestCase
 {
-    private $resourcesPath = 'tests/resources';
 
     private $templatePath;
 
@@ -180,14 +179,6 @@ class SheetTemplateWriterTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->templatePath = $this->getResourcePath('template.xlsx');
-    }
-
-    protected function getResourcePath($resourceName, $reType = null): ?string
-    {
-        $resourceType = pathinfo($resourceName, PATHINFO_EXTENSION);
-        $resourceType = !empty($resourceType) ? $resourceType : $reType;
-        $resourcePath = realpath($this->resourcesPath) . '/' . strtolower($resourceType) . '/' . $resourceName;
-        return (file_exists($resourcePath) ? $resourcePath : null);
+        $this->templatePath = Utility::getResourcePath('template.xlsx');
     }
 }
