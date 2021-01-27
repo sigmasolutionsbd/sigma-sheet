@@ -32,9 +32,28 @@ class SheetTxtFileReaderTest extends TestCase
     /**
      * @test
      */
+    public function it_reads_comma_separated_txt_file_using_open_file()
+    {
+        $data = SheetReader::openFile($this->commaSeparatedFilePath)
+            ->setFieldSeparator(function ($line) {
+                return array_map('trim', explode(',', $line));
+            })->getRows();
+
+        $this->assertEquals([
+            ["header1", "header2", "header3"],
+            ["value11", "value12", "value13"],
+            ["value21", "value22", "value23"],
+            ["value31", "value32", "value33"],
+        ], $data);
+    }
+
+
+    /**
+     * @test
+     */
     public function it_reads_comma_separated_txt_file_with_text_field_separator()
     {
-        $data = SheetReader::openFileAsTxt($this->commaSeparatedFilePath,",")->getRows();
+        $data = SheetReader::openFileAsTxt($this->commaSeparatedFilePath, ",")->getRows();
         $this->assertEquals([
             ["header1", "header2", "header3\n"],
             ["value11", "value12", "value13\n"],

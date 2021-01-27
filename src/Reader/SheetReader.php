@@ -27,10 +27,12 @@ class SheetReader
 
     private $isIndexBaseSheetIteration = true;
 
-    public function __construct(string $filePath, $readerType = null)
+    public function __construct(string $filePath, $readerType = null, $fieldSeparator = null)
     {
         $this->filePath = $filePath;
         $this->readerType = $readerType;
+        $this->setFieldSeparator($fieldSeparator);
+
         if (is_null($readerType)) {
             $this->readerType = \strtolower(\pathinfo($filePath, PATHINFO_EXTENSION));
         }
@@ -70,17 +72,17 @@ class SheetReader
      */
     public static function openFileAsTxt($filePath, $fieldSeparator): SheetReader
     {
-        $obj = new static($filePath, ReaderType::TXT);
-        $obj->setFieldSeparator($fieldSeparator);
-        return $obj;
+        return new static($filePath, ReaderType::TXT, $fieldSeparator);
     }
 
     /**
      * @param callable | string $fieldSeparator callback($row) or Character that delimits fields
+     * @return SheetReader
      */
-    public function setFieldSeparator($fieldSeparator)
+    public function setFieldSeparator($fieldSeparator): SheetReader
     {
         $this->fieldSeparator = $fieldSeparator;
+        return $this;
     }
 
     public function getChunkSize()
