@@ -40,7 +40,7 @@ class SheetWriter
     {
         try {
             return (new SheetWriter($writerType));
-        }catch (\Exception $exception){
+        } catch (\Exception $exception) {
             throw new SigmaSheetException($exception->getMessage());
         }
     }
@@ -65,23 +65,14 @@ class SheetWriter
             if (is_string($rows[0])) {
                 $this->writer->addRow(WriterEntityFactory::createRowFromArray($rows));
             }
-            $this->writer->addRows($this->getSpoutEquivalentRows($rows));
+            foreach ($rows as $row) {
+                $this->writer->addRow(WriterEntityFactory::createRowFromArray($row));
+            }
         } catch (\Exception $exception) {
             throw new SigmaSheetException($exception->getMessage());
         } finally {
             $this->close();
         }
-    }
-
-    /**
-     * @param array $rows
-     * @return array|\Box\Spout\Common\Entity\Row[]
-     */
-    private function getSpoutEquivalentRows(array $rows)
-    {
-        return array_map(function (array $row) {
-            return WriterEntityFactory::createRowFromArray($row);
-        }, $rows);
     }
 
     /**
