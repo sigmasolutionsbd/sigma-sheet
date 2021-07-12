@@ -155,11 +155,11 @@ class SheetReader
     }
 
     /**
-     * @param callable|null $dataConsumer
-     * @return array
+     * @param callable $dataConsumer
+     * @param int $noOfChunks Number of chunks 0 = All
      * @throws SigmaSheetException
      */
-    public function readAsChunks(callable $dataConsumer)
+    public function readAsChunks(callable $dataConsumer, $noOfChunks = 0)
     {
         try {
             $reader = ReaderFactory::createFromType($this->readerType);
@@ -170,10 +170,15 @@ class SheetReader
             $originalSheets = iterator_to_array($reader->getSheetIterator());
             $filteredSheets = $this->getSelectedSheets($originalSheets);
 
+            $chunkReturned = 0;
+
             foreach ($filteredSheets as $sheetWithInxAndName) {
                 $skip = $this->skipInitialNumberOfRows;
                 $dataChunks = [];
                 foreach ($sheetWithInxAndName['sheet']->getRowIterator() as $row) {
+                    if ($noOfChunks != 0 && $chunkReturned >= $noOfChunks) {
+                        return;
+                    }
                     if ($this->shouldRemoveEmpty && empty($row)) {
                         continue;
                     }
@@ -190,12 +195,14 @@ class SheetReader
                     $dataChunks[] = $data;
                     if (count($dataChunks) % $this->chunkSize == 0) {
                         $dataConsumer($dataChunks, $sheetWithInxAndName['index'], $sheetWithInxAndName['name']);
+                        $chunkReturned++;
                         $dataChunks = [];
                     }
                 }
 
                 if (count($dataChunks) != 0) {
                     $dataConsumer($dataChunks, $sheetWithInxAndName['index'], $sheetWithInxAndName['name']);
+                    $chunkReturned++;
                 }
             }
 
