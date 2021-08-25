@@ -3,7 +3,6 @@
 namespace Sigmasolutions\Sheets\Reader;
 
 use Box\Spout\Common\Exception\SpoutException;
-use Box\Spout\Common\Exception\UnsupportedTypeException;
 use Sigmasolutions\Sheets\Exceptions\SigmaSheetException;
 use Sigmasolutions\Sheets\Reader\Creator\ReaderFactory;
 use Sigmasolutions\Sheets\Reader\Creator\ReaderType;
@@ -35,6 +34,11 @@ class SheetReader
         if (is_null($readerType)) {
             $this->readerType = \strtolower(\pathinfo($filePath, PATHINFO_EXTENSION));
         }
+    }
+
+    public static function openWithType(string $filePath, string $fileType): SheetReader
+    {
+        return new static($filePath, $fileType);
     }
 
     /**
