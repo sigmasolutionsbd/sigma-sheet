@@ -1,10 +1,9 @@
 <?php
 
-
 namespace Sigmasolutions\Sheets\Reader;
 
-
 use Box\Spout\Common\Exception\SpoutException;
+use Box\Spout\Common\Exception\UnsupportedTypeException;
 use Sigmasolutions\Sheets\Exceptions\SigmaSheetException;
 use Sigmasolutions\Sheets\Reader\Creator\ReaderFactory;
 use Sigmasolutions\Sheets\Reader\Creator\ReaderType;
@@ -205,7 +204,6 @@ class SheetReader
                     $chunkReturned++;
                 }
             }
-
         } catch (SpoutException $spoutException) {
             throw new SigmaSheetException(($spoutException->getMessage()));
         } finally {
@@ -213,6 +211,21 @@ class SheetReader
                 $reader->close();
             }
         }
+    }
+
+    /**
+     * @param int $noOfRows
+     * @return array
+     * @throws SigmaSheetException
+     */
+    public function getFirstNRows(int $noOfRows): array
+    {
+        $firstNRows = [];
+        $this->chunkSize(1)
+            ->readAsChunks(function ($row) use (&$firstNRows) {
+                $firstNRows = array_merge($firstNRows, $row);
+            }, $noOfRows);
+        return $firstNRows;
     }
 
     /**
@@ -231,7 +244,10 @@ class SheetReader
             return ['name' => $sheet->getName(), 'index' => $idx, 'sheet' => $sheet];
         }, array_keys($originalSheets), $originalSheets);
 
-        return $this->filterSelectedSheets($originalSheetsWithIndexAndName, $this->isIndexBaseSheetIteration ? $this->sheetIndexs : $this->sheetNames);
+        return $this->filterSelectedSheets(
+            $originalSheetsWithIndexAndName,
+            $this->isIndexBaseSheetIteration ? $this->sheetIndexs : $this->sheetNames
+        );
     }
 
     /**
@@ -245,7 +261,8 @@ class SheetReader
         $filteredSheets = [];
         foreach ($sheetRefs as $ref) {
             $founds = array_filter($originalSheets, function ($sheetWithIdxAndName) use ($ref) {
-                return ($this->isIndexBaseSheetIteration && $ref == $sheetWithIdxAndName['index']) || (!$this->isIndexBaseSheetIteration && $ref == $sheetWithIdxAndName['name']);
+                return ($this->isIndexBaseSheetIteration && $ref == $sheetWithIdxAndName['index'])
+                    || (!$this->isIndexBaseSheetIteration && $ref == $sheetWithIdxAndName['name']);
             });
             if (empty($founds) || count($founds) !== 1) {
                 throw new SigmaSheetException('undefined sheet ' . $ref);

@@ -7,7 +7,6 @@ use Box\Spout\Reader\ReaderAbstract;
 use Sigmasolutions\Sheets\Reader\Txt\Creator\InternalEntityFactory;
 use Sigmasolutions\Sheets\Reader\Txt\Manager\Options;
 
-
 /**
  * Class Reader
  * This class provides support to read data from a TXT file.

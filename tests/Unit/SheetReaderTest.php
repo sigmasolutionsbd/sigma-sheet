@@ -297,6 +297,18 @@ class SheetReaderTest extends TestCase
     /**
      * @test
      */
+    public function it_can_read_first_n_rows()
+    {
+       $this->assertCount(1, SheetReader::openFile($this->multiSheetPath)->setSheetNames(['Sheet-1'])->getFirstNRows(1));
+        $this->assertEquals($this->sheetValues[0][0], SheetReader::openFile($this->multiSheetPath)->setSheetNames(['Sheet-1'])->getFirstNRows(1)[0]);
+
+        $this->assertCount(2, SheetReader::openFile($this->multiSheetPath)->setSheetNames(['Sheet-1'])->getFirstNRows(2));
+        $this->assertEquals($this->sheetValues[0][1], SheetReader::openFile($this->multiSheetPath)->setSheetNames(['Sheet-1'])->getFirstNRows(2)[1]);
+        $this->assertCount(3, SheetReader::openFile($this->multiSheetPath)->setSheetNames(['Sheet-1'])->getFirstNRows(3));
+    }
+    /**
+     * @test
+     */
     public function it_allows_open_file_as_xlsx()
     {
         $data = SheetReader::openFileAsXLSX($this->multiSheetXLSXWithoutExtensionPath)->setSheetNames(['Sheet-1', 'Sheet-2', 'Sheet-3'])->getRows();

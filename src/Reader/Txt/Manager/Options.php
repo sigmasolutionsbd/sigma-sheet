@@ -9,10 +9,10 @@ namespace Sigmasolutions\Sheets\Reader\Txt\Manager;
 abstract class Options
 {
     // Common options
-    const SHOULD_PRESERVE_EMPTY_ROWS = 'shouldPreserveEmptyRows';
-    const ENCODING = 'encoding';
+    public const SHOULD_PRESERVE_EMPTY_ROWS = 'shouldPreserveEmptyRows';
+    public const ENCODING = 'encoding';
 
 
     // TXT specific options
-    const TXT_FIELD_SEPARATOR = 'txtFieldDelimiter';
+    public const TXT_FIELD_SEPARATOR = 'txtFieldDelimiter';
 }

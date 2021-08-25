@@ -8,9 +8,9 @@ namespace Sigmasolutions\Sheets\Reader\Creator;
  */
 abstract class ReaderType
 {
-    const CSV = 'csv';
-    const XLSX = 'xlsx';
-    const ODS = 'ods';
-    const TXT = 'txt';
-    const LOG = 'log';
+    public const CSV = 'csv';
+    public const XLSX = 'xlsx';
+    public const ODS = 'ods';
+    public const TXT = 'txt';
+    public const LOG = 'log';
 }

@@ -2,7 +2,7 @@
 
 namespace Sigmasolutions\Sheets\Reader\Txt;
 
-use \Box\Spout\Reader\SheetInterface;
+use Box\Spout\Reader\SheetInterface;
 
 /**
  * Class Sheet

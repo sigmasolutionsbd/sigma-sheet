@@ -27,5 +27,12 @@
     "require-dev": {
         "phpunit/phpunit": "^9"
     },
-    "minimum-stability": "stable"
+    "minimum-stability": "dev",
+    "scripts": {
+        "sniffer": "phpcs --standard=PSR12 src",
+        "beautify": "phpcbf --standard=PSR12 src",
+        "test": "XDEBUG_MODE=coverage phpunit",
+        "coverage": "XDEBUG_MODE=coverage phpunit --coverage-text",
+        "coverage:html": "XDEBUG_MODE=coverage phpunit --coverage-html coverage-output"
+    }
 }

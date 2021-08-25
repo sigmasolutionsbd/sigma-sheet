@@ -1,8 +1,6 @@
 <?php
 
-
 namespace Sigmasolutions\Sheets\Writer;
-
 
 use PhpOffice\PhpSpreadsheet\Exception;
 use PhpOffice\PhpSpreadsheet\IOFactory;
@@ -56,7 +54,7 @@ class SheetTemplateWriter
         $this->spreadsheet->getSheetByName($sheetName)
             ->fromArray(
                 $rows,
-                NULL,
+                null,
                 $startCell,
                 true
             );

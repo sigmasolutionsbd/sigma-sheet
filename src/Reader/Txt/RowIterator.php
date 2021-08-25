@@ -50,8 +50,7 @@ class RowIterator implements IteratorInterface
         OptionsManagerInterface $optionsManager,
         InternalEntityFactory $entityFactory,
         GlobalFunctionsHelper $globalFunctionsHelper
-    )
-    {
+    ) {
         $this->filePointer = $filePointer;
 
 

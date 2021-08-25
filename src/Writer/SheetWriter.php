@@ -1,8 +1,6 @@
 <?php
 
-
 namespace Sigmasolutions\Sheets\Writer;
-
 
 use Box\Spout\Writer\Common\Creator\WriterEntityFactory;
 use Sigmasolutions\Sheets\Exceptions\SigmaSheetException;
@@ -82,5 +80,4 @@ class SheetWriter
     {
         $this->writer->close();
     }
-
 }

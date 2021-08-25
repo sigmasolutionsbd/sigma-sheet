@@ -12,7 +12,6 @@ use Sigmasolutions\Sheets\Reader\Txt\RowIterator;
 use Sigmasolutions\Sheets\Reader\Txt\Sheet;
 use Sigmasolutions\Sheets\Reader\Txt\SheetIterator;
 
-
 /**
  * Class EntityFactory
  * Factory to create entities
