@@ -327,6 +327,14 @@ class SheetReaderTest extends TestCase
         $this->assertEquals($this->sheetValues[0], $data);
     }
 
+    /**
+     * @test
+     */
+    public function it_should_return_all_sheet_names()
+    {
+        $this->assertEquals(['Sheet-1', 'Sheet-2', 'Sheet-3'], SheetReader::openFileAsXLSX($this->multiSheetPath)->getOriginalSheetNames());
+    }
+
     protected function setUp(): void
     {
         $this->multiSheetPath = Utility::getResourcePath('multi_sheet.xlsx');

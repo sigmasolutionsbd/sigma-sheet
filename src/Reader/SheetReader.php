@@ -240,9 +240,11 @@ class SheetReader
     public function getSelectedSheets($originalSheets)
     {
         if (!$this->shouldUseHiddenSheet) {
-            $originalSheets = array_values(array_filter($originalSheets, function ($sheet) {
-                return $sheet->isVisible();
-            }));
+            $originalSheets = array_values(
+                array_filter($originalSheets, function ($sheet) {
+                    return $sheet->isVisible();
+                })
+            );
         }
         $originalSheetsWithIndexAndName = array_map(function ($idx, $sheet) {
             return ['name' => $sheet->getName(), 'index' => $idx, 'sheet' => $sheet];
@@ -367,5 +369,16 @@ class SheetReader
     {
         $this->actions[] = ['type' => static::ACTION_TYPE_FILTER, 'action' => $filter];
         return $this;
+    }
+
+    public function getOriginalSheetNames()
+    {
+        $reader = ReaderFactory::createFromType($this->readerType);
+        $reader->open($this->filePath);
+        $sheetNames = [];
+        foreach ($reader->getSheetIterator() as $sheet) {
+            $sheetNames[] = $sheet->getName();
+        }
+        return $sheetNames;
     }
 }
