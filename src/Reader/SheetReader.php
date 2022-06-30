@@ -143,7 +143,7 @@ class SheetReader
             }, $selectedCols);
         })->readAsChunks(function ($chunk, $index, $sheetName) use (&$dataOfSheets) {
             $ref = $this->isIndexBaseSheetIteration ? $index : $sheetName;
-            if (!array_key_exists($index, $dataOfSheets)) {
+            if (!array_key_exists($ref, $dataOfSheets)) {
                 $dataOfSheets[$ref] = [];
             }
             $dataOfSheets[$ref] = array_merge($dataOfSheets[$ref], $chunk);
