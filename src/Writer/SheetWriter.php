@@ -16,6 +16,8 @@ class SheetWriter
     private $writerType;
 
     /**
+     * Create a SheetWriter instance
+     * 
      * @param string $writerType
      * @return SheetWriter
      * * @throws SigmaSheetException
@@ -50,6 +52,8 @@ class SheetWriter
     }
 
     /**
+     * Opens the file for writing, writes all rows, closes the file - all in one go. Good for writing small data
+     * 
      * @param string $filePath
      * @param array $rows
      * @throws SigmaSheetException
