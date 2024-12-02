@@ -2,43 +2,41 @@
 
 namespace Sigmasolutions\Sheets\Writer;
 
+use Exception;
 use Box\Spout\Writer\Common\Creator\WriterEntityFactory;
+use Box\Spout\Writer\WriterInterface;
 use Sigmasolutions\Sheets\Exceptions\SigmaSheetException;
 
 class SheetWriter
 {
-    /**
-     * @var WriterEntityFactory
-     */
+    /** @var WriterInterface */
     private $writer;
-    /**
-     * @var string
-     */
+
+    /** @var string */
     private $writerType;
 
     /**
+     * @param string $writerType
+     * @return SheetWriter
+     * * @throws SigmaSheetException
+     */
+    public static function open($writerType = 'xlsx')
+    {
+        return (new static($writerType));
+    }
+
+    /**
      * SheetWriter constructor.
+     * 
      * @param $writerType
-     * @throws \Box\Spout\Common\Exception\UnsupportedTypeException
+     * @throws SigmaSheetException
      */
     public function __construct($writerType)
     {
         $this->writerType = $writerType;
-        $this->writer = WriterEntityFactory::createWriter($writerType);
-    }
-
-    /**
-     * @param $filePath
-     * @param string $writerType
-     * @return SheetWriter
-     * @throws \Box\Spout\Common\Exception\IOException
-     * @throws \Box\Spout\Common\Exception\UnsupportedTypeException
-     */
-    public static function open($writerType = 'xlsx')
-    {
         try {
-            return (new SheetWriter($writerType));
-        } catch (\Exception $exception) {
+            $this->writer = WriterEntityFactory::createWriter($writerType);
+        } catch (Exception $exception) {
             throw new SigmaSheetException($exception->getMessage());
         }
     }
@@ -66,7 +64,7 @@ class SheetWriter
             foreach ($rows as $row) {
                 $this->writer->addRow(WriterEntityFactory::createRowFromArray($row));
             }
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
             throw new SigmaSheetException($exception->getMessage());
         } finally {
             $this->close();
