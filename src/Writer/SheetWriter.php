@@ -76,6 +76,57 @@ class SheetWriter
     }
 
     /**
+     * Opens the file for writing - intended for writing in chunks. Use the writeSingleRow / writeMultipleRow methods for writing
+     * Don't forget to close the file after writing
+     * 
+     * @param string $filePath
+     * @throws SigmaSheetException
+     */
+    public function openForWriting(string $filePath): static
+    {
+        try {
+            $this->writer->openToFile($filePath);
+        } catch (Exception $exception) {
+            throw new SigmaSheetException($exception->getMessage());
+        }
+        return $this;
+    }
+
+    /**
+     * Write a single row
+     * 
+     * @param array $row
+     * @throws SigmaSheetException
+     */
+    public function writeSingleRow(array $row): static
+    {
+        try {
+            $this->writer->addRow(WriterEntityFactory::createRowFromArray($row));
+        } catch (Exception $exception) {
+            throw new SigmaSheetException($exception->getMessage());
+        }
+        return $this;
+    }
+
+    /**
+     * Write multiple rows
+     * 
+     * @param array $rows
+     * @throws SigmaSheetException
+     */
+    public function writeMultipleRows(array $rows): static
+    {
+        try {
+            foreach ($rows as $r) {
+                $this->writer->addRow(WriterEntityFactory::createRowFromArray($r));
+            }
+        } catch (Exception $exception) {
+            throw new SigmaSheetException($exception->getMessage());
+        }
+        return $this;
+    }
+
+    /**
      * @return void
      */
     public function close()
