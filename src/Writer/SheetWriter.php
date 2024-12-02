@@ -2,43 +2,43 @@
 
 namespace Sigmasolutions\Sheets\Writer;
 
+use Exception;
 use Box\Spout\Writer\Common\Creator\WriterEntityFactory;
+use Box\Spout\Writer\WriterInterface;
 use Sigmasolutions\Sheets\Exceptions\SigmaSheetException;
 
 class SheetWriter
 {
-    /**
-     * @var WriterEntityFactory
-     */
+    /** @var WriterInterface */
     private $writer;
-    /**
-     * @var string
-     */
+
+    /** @var string */
     private $writerType;
 
     /**
+     * Create a SheetWriter instance
+     * 
+     * @param string $writerType
+     * @return SheetWriter
+     * * @throws SigmaSheetException
+     */
+    public static function open($writerType = 'xlsx')
+    {
+        return (new static($writerType));
+    }
+
+    /**
      * SheetWriter constructor.
+     * 
      * @param $writerType
-     * @throws \Box\Spout\Common\Exception\UnsupportedTypeException
+     * @throws SigmaSheetException
      */
     public function __construct($writerType)
     {
         $this->writerType = $writerType;
-        $this->writer = WriterEntityFactory::createWriter($writerType);
-    }
-
-    /**
-     * @param $filePath
-     * @param string $writerType
-     * @return SheetWriter
-     * @throws \Box\Spout\Common\Exception\IOException
-     * @throws \Box\Spout\Common\Exception\UnsupportedTypeException
-     */
-    public static function open($writerType = 'xlsx')
-    {
         try {
-            return (new SheetWriter($writerType));
-        } catch (\Exception $exception) {
+            $this->writer = WriterEntityFactory::createWriter($writerType);
+        } catch (Exception $exception) {
             throw new SigmaSheetException($exception->getMessage());
         }
     }
@@ -52,6 +52,8 @@ class SheetWriter
     }
 
     /**
+     * Opens the file for writing, writes all rows, closes the file - all in one go. Good for writing small data
+     * 
      * @param string $filePath
      * @param array $rows
      * @throws SigmaSheetException
@@ -66,11 +68,62 @@ class SheetWriter
             foreach ($rows as $row) {
                 $this->writer->addRow(WriterEntityFactory::createRowFromArray($row));
             }
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
             throw new SigmaSheetException($exception->getMessage());
         } finally {
             $this->close();
         }
+    }
+
+    /**
+     * Opens the file for writing - intended for writing in chunks. Use the writeSingleRow / writeMultipleRow methods for writing
+     * Don't forget to close the file after writing
+     * 
+     * @param string $filePath
+     * @throws SigmaSheetException
+     */
+    public function openForWriting(string $filePath): static
+    {
+        try {
+            $this->writer->openToFile($filePath);
+        } catch (Exception $exception) {
+            throw new SigmaSheetException($exception->getMessage());
+        }
+        return $this;
+    }
+
+    /**
+     * Write a single row
+     * 
+     * @param array $row
+     * @throws SigmaSheetException
+     */
+    public function writeSingleRow(array $row): static
+    {
+        try {
+            $this->writer->addRow(WriterEntityFactory::createRowFromArray($row));
+        } catch (Exception $exception) {
+            throw new SigmaSheetException($exception->getMessage());
+        }
+        return $this;
+    }
+
+    /**
+     * Write multiple rows
+     * 
+     * @param array $rows
+     * @throws SigmaSheetException
+     */
+    public function writeMultipleRows(array $rows): static
+    {
+        try {
+            foreach ($rows as $r) {
+                $this->writer->addRow(WriterEntityFactory::createRowFromArray($r));
+            }
+        } catch (Exception $exception) {
+            throw new SigmaSheetException($exception->getMessage());
+        }
+        return $this;
     }
 
     /**
